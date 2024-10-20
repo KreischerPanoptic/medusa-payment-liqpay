@@ -1,0 +1,1 @@
+export { LiqPayPaymentProcessorConfig as PluginOptions } from "./services/liqpay-payment-processor";

@@ -1,0 +1,85 @@
+{
+  "name": "medusa-payment-liqpay",
+  "version": "0.0.1",
+  "description": "medusa-payment-liqpay is a Medusa plugin that adds LiqPay as a payment provider to Medusa ecommerce stores",
+  "author": "Dennis Soroka",
+  "license": "MIT",
+  "main": "dist/index.js",
+  "files": [
+    "dist"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/KreischerPanoptic/medusa-payment-liqpay"
+  },
+  "keywords": [
+    "typescript",
+    "ecommerce",
+    "headless",
+    "medusa",
+    "medusa",
+    "medusa-plugin",
+    "medusa-plugin-payment",
+    "medusa-payment-liqpay",
+    "medusa-liqpay",
+    "liqpay"
+  ],
+  "scripts": {
+    "clean": "cross-env ./node_modules/.bin/rimraf dist",
+    "build": "rimraf dist && tsc -p tsconfig.build.json",
+    "prepare": "cross-env NODE_ENV=production yarn build",
+    "dev": "tsc -p tsconfig.build.json --watch",
+    "test:watch": "jest --watch",
+    "test": "jest --ci --coverage",
+    "lint": "eslint --ignore-path .gitignore . && prettier --check .",
+    "lint:fix": "eslint --ignore-path .gitignore . --fix && prettier --write ."
+  },
+  "peerDependencies": {
+    "@medusajs/medusa": "^1.20.4"
+  },
+  "dependencies": {
+    "@medusajs/utils": "^1.11.8",
+    "axios": "^1.7.4",
+    "axios-retry": "^4.1.0"
+  },
+  "devDependencies": {
+    "@medusajs/medusa": "^1.20.4",
+    "@types/express": "^4.17.21",
+    "@types/jest": "^29.5.12",
+    "@types/node": "^16.18.39",
+    "cross-env": "^7.0.3",
+    "dotenv": "16.4.5",
+    "jest": "^29.7.0",
+    "msw": "^2.2.14",
+    "rimraf": "^6.0.1",
+    "ts-jest": "^29.1.1",
+    "typescript": "5.5.4"
+  },
+  "jest": {
+    "globals": {
+      "ts-jest": {
+        "tsconfig": "tsconfig.spec.json"
+      }
+    },
+    "moduleFileExtensions": [
+      "js",
+      "json",
+      "ts"
+    ],
+    "testPathIgnorePatterns": [
+      "/node_modules/",
+      "<rootDir>/node_modules/"
+    ],
+    "rootDir": "src",
+    "testRegex": "(/__tests__/.*|\\.(test|spec))\\.(ts|js)$",
+    "transform": {
+      ".ts": "ts-jest"
+    },
+    "collectCoverageFrom": [
+      "**/*.(t|j)s"
+    ],
+    "coverageDirectory": "./coverage",
+    "testEnvironment": "node"
+  },
+  "packageManager": "yarn@1.22.22"
+}
