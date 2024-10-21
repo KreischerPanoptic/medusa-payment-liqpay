@@ -107,7 +107,7 @@ class LiqPayPaymentProcessor extends AbstractPaymentProcessor {
         try {
             const { orderId, cartId } = paymentSessionData;
             const data = await this.liqpay.transaction.get({
-                id: orderId,
+                id: cartId,
             });
             const {status, amount, currency} = data;
             const cart = await this.cartService.retrieveWithTotals(cartId);
@@ -127,7 +127,7 @@ class LiqPayPaymentProcessor extends AbstractPaymentProcessor {
                     data: {
                         ...paymentSessionData,
                         orderId: orderId,
-                        cartId: cartId,
+                        cartId: cart.id,
                         liqpayData: data
                     },
                 };
@@ -211,7 +211,7 @@ class LiqPayPaymentProcessor extends AbstractPaymentProcessor {
         return paymentSessionData;
     }
 
-    async getPaymentStatus(paymentSessionData: Record<string, unknown> & { orderId?: string }): Promise<PaymentSessionStatus> {
+    async getPaymentStatus(paymentSessionData: Record<string, unknown> & { cartId?: string }): Promise<PaymentSessionStatus> {
         if (this.debug) {
             console.info(
                 "LP_P_Debug: GetPaymentStatus",
@@ -219,14 +219,14 @@ class LiqPayPaymentProcessor extends AbstractPaymentProcessor {
             );
         }
 
-        const { orderId } = paymentSessionData;
+        const { cartId } = paymentSessionData;
 
-        if (!orderId) {
+        if (!cartId) {
             return PaymentSessionStatus.PENDING;
         }
         try {
             const {status} = await this.liqpay.transaction.get({
-                id: orderId,
+                id: cartId,
             });
             switch (status) {
                 case LiqPayStatusEnum.success:
@@ -267,7 +267,7 @@ class LiqPayPaymentProcessor extends AbstractPaymentProcessor {
         };
     }
 
-    async refundPayment(paymentSessionData: Record<string, unknown> & { orderId?: string }, refundAmount: number): Promise<PaymentProcessorError | PaymentProcessorSessionResponse["session_data"]> {
+    async refundPayment(paymentSessionData: Record<string, unknown> & { cartId?: string }, refundAmount: number): Promise<PaymentProcessorError | PaymentProcessorSessionResponse["session_data"]> {
         if (this.debug) {
             console.info(
                 "LP_P_Debug: RefundPayment",
@@ -276,10 +276,10 @@ class LiqPayPaymentProcessor extends AbstractPaymentProcessor {
         }
 
         try {
-            const { orderId } = paymentSessionData;
+            const { cartId } = paymentSessionData;
 
             const data = await this.liqpay.refund.create({
-                id: orderId,
+                id: cartId,
                 amount: refundAmount,
             });
             const { status } = data;
@@ -299,7 +299,7 @@ class LiqPayPaymentProcessor extends AbstractPaymentProcessor {
         }
     }
 
-    async retrievePayment(paymentSessionData: Record<string, unknown> & { orderId?: string }): Promise<PaymentProcessorError | PaymentProcessorSessionResponse["session_data"]> {
+    async retrievePayment(paymentSessionData: Record<string, unknown> & { cartId?: string }): Promise<PaymentProcessorError | PaymentProcessorSessionResponse["session_data"]> {
         if (this.debug) {
             console.info(
                 "LP_P_Debug: RetrievePayment",
@@ -308,10 +308,10 @@ class LiqPayPaymentProcessor extends AbstractPaymentProcessor {
         }
 
         try {
-            const { orderId } = paymentSessionData;
+            const { cartId } = paymentSessionData;
 
             const data = await this.liqpay.transaction.get({
-                id: orderId,
+                id: cartId,
             });
 
             if (data.status === LiqPayStatusEnum.error) {
