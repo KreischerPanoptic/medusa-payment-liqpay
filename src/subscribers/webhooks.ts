@@ -11,12 +11,13 @@ import { MedusaError } from "@medusajs/utils";
 import LiqPayPaymentProcessor, {
     type LiqPayPaymentProcessorConfig,
 } from "../services/liqpay-payment-processor";
+import {LiqPayCallbackStatusResponse} from "../lib/interfaces/liqpay.interfaces";
 
 export const SUPPORTED_EVENTS = ["charge.success"];
 
 export type WebhookEventData = {
     event: (typeof SUPPORTED_EVENTS)[number];
-    data: Record<string, any>;
+    data: LiqPayCallbackStatusResponse;
 };
 
 export const config: SubscriberConfig = {
@@ -33,7 +34,7 @@ export default async function webhookHandle({
     }
     >(`pp_${LiqPayPaymentProcessor.identifier}`).configuration;
 
-    const cartId = data.data.metadata.cart_id;
+    const cartId = data.data.order_id;
 
     if (!cartId) {
         console.error(
