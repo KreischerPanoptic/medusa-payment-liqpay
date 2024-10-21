@@ -10,7 +10,7 @@ import {
     PaymentSessionStatus,
 } from "@medusajs/medusa";
 import {MedusaError, MedusaErrorTypes} from "@medusajs/utils";
-import {LiqPayStatusEnum} from "../lib/interfaces/liqpay.interfaces";
+import {LiqPayStatusEnum, LiqPayStatusUnion} from "../lib/interfaces/liqpay.interfaces";
 
 export interface LiqPayPaymentProcessorConfig
     extends Record<string, unknown> {
@@ -109,19 +109,18 @@ class LiqPayPaymentProcessor extends AbstractPaymentProcessor {
             const data = await this.liqpay.transaction.get({
                 id: cartId,
             });
-            const {status, amount, currency} = data;
             const cart = await this.cartService.retrieveWithTotals(cartId);
 
             if (this.debug) {
                 console.info(
                     "LP_P_Debug: AuthorizePayment: Verification",
-                    JSON.stringify({ status, cart }, null, 2),
+                    JSON.stringify({ liqpay: data, status: data.status, cart }, null, 2),
                 );
             }
 
-            if (status === LiqPayStatusEnum.error ||
-                status === LiqPayStatusEnum.failure ||
-                status === LiqPayStatusEnum.try_again) {
+            if (data.status === LiqPayStatusEnum.error ||
+                data.status === LiqPayStatusEnum.failure ||
+                data.status === LiqPayStatusEnum.try_again) {
                 return {
                     status: PaymentSessionStatus.ERROR,
                     data: {
@@ -132,61 +131,68 @@ class LiqPayPaymentProcessor extends AbstractPaymentProcessor {
                     },
                 };
             }
+            if(data.status) {
+                switch (data.status as LiqPayStatusUnion) {
+                    case 'success':
+                    case 'subscribed': {
+                        const amountValid =
+                            Math.round(cart.total) === Math.round(data.amount);
+                        const currencyValid =
+                            cart.region.currency_code === data.currency.toLowerCase();
 
-            if(status === LiqPayStatusEnum.success ||
-            status === LiqPayStatusEnum.subscribed) {
-                const amountValid =
-                    Math.round(cart.total) === Math.round(amount);
-                const currencyValid =
-                    cart.region.currency_code === currency.toLowerCase();
+                        if (amountValid && currencyValid) {
+                            // Successful transaction
+                            return {
+                                status: PaymentSessionStatus.AUTHORIZED,
+                                data: {
+                                    orderId: orderId,
+                                    cartId: cartId,
+                                    liqpayData: data
+                                },
+                            };
+                        }
 
-                if (amountValid && currencyValid) {
-                    // Successful transaction
-                    return {
-                        status: PaymentSessionStatus.AUTHORIZED,
-                        data: {
-                            orderId: orderId,
-                            cartId: cartId,
-                            liqpayData: data
-                        },
-                    };
+                        // Invalid amount or currency
+                        // We refund the transaction
+                        await this.refundPayment(
+                            {
+                                ...paymentSessionData,
+                                orderId: orderId,
+                                cartId: cartId,
+                                liqpayData: data
+                            },
+                            data.amount,
+                        );
+
+                        // And return the failed status
+                        return {
+                            status: PaymentSessionStatus.ERROR,
+                            data: {
+                                ...paymentSessionData,
+                                orderId: orderId,
+                                cartId: cartId,
+                                liqpayData: data
+                            },
+                        };
+                    }
+                    case 'error':
+                    case 'failure':
+                    case 'try_again':
+                        return {
+                            status: PaymentSessionStatus.ERROR,
+                            data: {
+                                ...paymentSessionData,
+                                orderId: orderId,
+                                cartId: cartId,
+                                liqpayData: data
+                            },
+                        };
+                    default:
+                        return {
+                            status: PaymentSessionStatus.PENDING,
+                            data: paymentSessionData,
+                        };
                 }
-
-                // Invalid amount or currency
-                // We refund the transaction
-                await this.refundPayment(
-                    {
-                        ...paymentSessionData,
-                        orderId: orderId,
-                        cartId: cartId,
-                        liqpayData: data
-                    },
-                    amount,
-                );
-
-                // And return the failed status
-                return {
-                    status: PaymentSessionStatus.ERROR,
-                    data: {
-                        ...paymentSessionData,
-                        orderId: orderId,
-                        cartId: cartId,
-                        liqpayData: data
-                    },
-                };
-            }
-            else if(data.status === LiqPayStatusEnum.error ||
-            data.status === LiqPayStatusEnum.failure ||
-            data.status === LiqPayStatusEnum.try_again) {
-                return {
-                    status: PaymentSessionStatus.ERROR,
-                    data: {
-                        ...paymentSessionData,
-                        orderId: orderId,
-                        cartId: cartId,
-                        liqpayData: data
-                    },
-                };
             }
             else {
                 return {
