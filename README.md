@@ -33,7 +33,7 @@ In the root of your Medusa server, run the following command to install the LiqP
 yarn add medusa-payment-liqpay
 ```
 
-### Configure the Paystack Plugin
+### Configure the LiqPay Plugin
 
 Next, you need to enable the plugin in your Medusa server.
 
