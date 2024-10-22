@@ -322,9 +322,17 @@ class LiqPayPaymentProcessor extends AbstractPaymentProcessor {
         try {
             const { cartId } = paymentSessionData;
 
+            const cart = await this.cartService.retrieveWithTotals(cartId);
+            const translatedAmount = this.convertToDecimal(refundAmount, cart.region)
+            if (this.debug) {
+                console.info(
+                    "LP_P_Debug: RefundPayment",
+                    JSON.stringify({ paymentSessionData, cart, translatedAmount }, null, 2),
+                );
+            }
             const data = await this.liqpay.refund.create({
                 id: cartId,
-                amount: refundAmount,
+                amount: translatedAmount,
             });
             const { status } = data;
 
