@@ -27,7 +27,7 @@ If you don’t have a Medusa server installed yet, you must follow the [quicksta
 
 ### Install the LiqPay Plugin
 
-In the root of your Medusa server, run the following command to install the Paystack plugin:
+In the root of your Medusa server, run the following command to install the LiqPay plugin:
 
 ```bash
 yarn add medusa-payment-liqpay
