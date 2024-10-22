@@ -7,7 +7,7 @@ import {
     PaymentProcessorContext,
     PaymentProcessorError,
     PaymentProcessorSessionResponse,
-    PaymentSessionStatus,
+    PaymentSessionStatus, Region,
 } from "@medusajs/medusa";
 import {MedusaError, MedusaErrorTypes} from "@medusajs/utils";
 import {LiqPayStatusEnum, LiqPayStatusUnion} from "../lib/interfaces/liqpay.interfaces";
@@ -44,6 +44,29 @@ export interface LiqPayPaymentProcessorConfig
      */
     debug?: boolean;
 }
+
+type RegionInfo = Pick<Region, "currency_code" | "tax_code" | "tax_rate">
+const noDivisionCurrencies = [
+    "krw",
+    "jpy",
+    "vnd",
+    "clp",
+    "pyg",
+    "xaf",
+    "xof",
+    "bif",
+    "djf",
+    "gnf",
+    "kmf",
+    "mga",
+    "rwf",
+    "xpf",
+    "htg",
+    "vuv",
+    "xag",
+    "xdr",
+    "xau",
+]
 
 class LiqPayPaymentProcessor extends AbstractPaymentProcessor {
     static identifier = "liqpay";
@@ -88,6 +111,16 @@ class LiqPayPaymentProcessor extends AbstractPaymentProcessor {
                 "Your Medusa installation contains an outdated cartService implementation. Update your Medusa installation.",
             );
         }
+    }
+
+    private convertToDecimal(amount: number, region: RegionInfo) {
+        const divisor = noDivisionCurrencies.includes(
+            region?.currency_code?.toLowerCase()
+        )
+            ? 1
+            : 100
+
+        return Math.floor(amount) / divisor
     }
 
     async authorizePayment(paymentSessionData: Record<string, unknown> & {
@@ -136,10 +169,15 @@ class LiqPayPaymentProcessor extends AbstractPaymentProcessor {
                     case 'success':
                     case 'subscribed': {
                         const amountValid =
-                            Math.round(cart.total) === Math.round(data.amount);
+                            this.convertToDecimal(cart.total, cart.region) === data.amount;
                         const currencyValid =
-                            cart.region.currency_code === data.currency.toLowerCase();
-
+                            cart.region.currency_code.toLowerCase() === data.currency.toLowerCase();
+                        if (this.debug) {
+                            console.info(
+                                "LP_P_Debug: AuthorizePayment: Verification of Amount and Currency",
+                                JSON.stringify({ currencyValid, amountValid, liqPayAmount: data.amount, cartAmount: this.convertToDecimal(cart.total, cart.region), liqPayCurrency: data.currency, cartCurrency: cart.region.currency_code }, null, 2),
+                            );
+                        }
                         if (amountValid && currencyValid) {
                             // Successful transaction
                             return {
