@@ -141,11 +141,11 @@ export interface LiqPayStatusResponse extends LiqPayResponse {
     transaction_id?: number;
     type?: string;
     version?: number;
+    err_code?: string;
+    err_description?: string;
 }
 
 export interface LiqPayCallbackStatusResponse extends LiqPayStatusResponse {
-    err_code?: string;
-    err_description?: string;
     redirect_to?: string;
     refund_date_last?: string | number;
     sender_first_name?: string;

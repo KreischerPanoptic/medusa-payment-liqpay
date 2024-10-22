@@ -120,7 +120,7 @@ class LiqPayPaymentProcessor extends AbstractPaymentProcessor {
 
             if (data.status === LiqPayStatusEnum.error ||
                 data.status === LiqPayStatusEnum.failure ||
-                data.status === LiqPayStatusEnum.try_again) {
+                data.status === LiqPayStatusEnum.try_again || data.err_code) {
                 return {
                     status: PaymentSessionStatus.ERROR,
                     data: {
