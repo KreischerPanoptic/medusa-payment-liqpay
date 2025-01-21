@@ -168,17 +168,38 @@ class LiqPayPaymentProcessor extends AbstractPaymentProcessor {
                 switch (data.status as LiqPayStatusUnion) {
                     case 'success':
                     case 'subscribed': {
-                        const amountValid =
-                            this.convertToDecimal(cart.total, cart.region) === data.amount;
+                        const total = this.convertToDecimal(cart.total, cart.region)
+                        // Calculate fee with minimum of 0.01
+                        const fee = Math.ceil((total * 0.015) * 100) / 100;
+                        
+                        // Base amount validation
+                        const amountValid = total === data.amount;
+                        // Amount with proper fee validation
+                        const amountWithFeeValid = Math.abs(
+                            data.amount - (total + fee)
+                        ) < 0.0099;
+                        
                         const currencyValid =
                             cart.region.currency_code.toLowerCase() === data.currency.toLowerCase();
+                        
                         if (this.debug) {
                             console.info(
                                 "LP_P_Debug: AuthorizePayment: Verification of Amount and Currency",
-                                JSON.stringify({ currencyValid, amountValid, liqPayAmount: data.amount, cartAmount: this.convertToDecimal(cart.total, cart.region), liqPayCurrency: data.currency, cartCurrency: cart.region.currency_code }, null, 2),
+                                JSON.stringify({ 
+                                    currencyValid, 
+                                    amountValid, 
+                                    amountWithFeeValid, 
+                                    liqPayAmount: data.amount,
+                                    cartAmount: total,
+                                    cartAmountWithFee: total + fee,
+                                    fee: fee,
+                                    liqPayCurrency: data.currency, 
+                                    cartCurrency: cart.region.currency_code 
+                                }, null, 2),
                             );
                         }
-                        if (amountValid && currencyValid) {
+                        
+                        if ((amountValid || amountWithFeeValid) && currencyValid) {
                             // Successful transaction
                             return {
                                 status: PaymentSessionStatus.AUTHORIZED,
@@ -199,7 +220,7 @@ class LiqPayPaymentProcessor extends AbstractPaymentProcessor {
                                 cartId: cartId,
                                 liqpayData: data
                             },
-                            data.amount,
+                            cart.total,
                         );
 
                         // And return the failed status

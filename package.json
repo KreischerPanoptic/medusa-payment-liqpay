@@ -1,6 +1,6 @@
 {
   "name": "medusa-payment-liqpay",
-  "version": "0.0.7",
+  "version": "0.0.13",
   "description": "medusa-payment-liqpay is a Medusa plugin that adds LiqPay as a payment provider to Medusa ecommerce stores",
   "author": "Dennis Soroka",
   "license": "MIT",
