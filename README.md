@@ -7,6 +7,10 @@ medusa-payment-liqpay is a Medusa plugin that adds [LiqPay](https://www.liqpay.u
 
 - Work in Progress. **NOT FULLY TESTED YET** Use at your own risk.
 
+## Update
+
+- Now mostly stable, after fixing bug related to LiqPay fee auto-deduction and refunds. Still, **EXTENSIVE TESTING REQUIRED**
+
 ## Features
 
 - Adds LiqPay as one of available Payment Processors for Medusa.js
